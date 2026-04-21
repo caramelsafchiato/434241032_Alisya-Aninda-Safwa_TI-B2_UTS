@@ -1,15 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class AppProvider extends ChangeNotifier {
-  AppProvider() {
-    _initializeStorage();
-  }
-
-  static const String _accountsStorageKey = 'app_accounts_v1';
-  static const String _ticketsStorageKey = 'app_tickets_v1';
+  AppProvider();
 
   ThemeMode _themeMode = ThemeMode.light;
   String _fullName = 'Guest User';
@@ -21,116 +13,6 @@ class AppProvider extends ChangeNotifier {
     'helpdesk': {'name': 'Helpdesk Team', 'password': 'helpdesk123', 'role': 'Helpdesk'},
     'staff': {'name': 'Staff IT', 'password': 'staff123', 'role': 'Helpdesk'},
   };
-
-  Future<void> _initializeStorage() async {
-    await _loadAccountsFromStorage();
-    await _loadTicketsFromStorage();
-    _normalizeTicketStore();
-    await _saveTicketsToStorage();
-    notifyListeners();
-  }
-
-  Future<void> _loadAccountsFromStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_accountsStorageKey);
-    if (raw == null || raw.isEmpty) {
-      return;
-    }
-
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map<String, dynamic>) {
-        return;
-      }
-
-      for (final entry in decoded.entries) {
-        final value = entry.value;
-        if (value is! Map) {
-          continue;
-        }
-
-        final name = value['name']?.toString();
-        final password = value['password']?.toString();
-        final role = value['role']?.toString();
-
-        if (password == null || password.isEmpty || role == null || role.isEmpty) {
-          continue;
-        }
-
-        _accounts[entry.key.toLowerCase()] = {
-          'name': (name == null || name.isEmpty) ? entry.key : name,
-          'password': password,
-          'role': role,
-        };
-      }
-
-    } catch (_) {
-      // Ignore corrupted saved accounts and keep default system accounts.
-    }
-  }
-
-  Future<void> _saveAccountsToStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_accountsStorageKey, jsonEncode(_accounts));
-  }
-
-  Future<void> _loadTicketsFromStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_ticketsStorageKey);
-    if (raw == null || raw.isEmpty) {
-      return;
-    }
-
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) {
-        return;
-      }
-
-      _tickets = decoded
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    } catch (_) {
-      // Ignore corrupted saved tickets and keep in-memory defaults.
-    }
-  }
-
-  Future<void> _saveTicketsToStorage() async {
-    final prefs = await SharedPreferences.getInstance();
-    final payload = _tickets.map((ticketRaw) {
-      final ticket = Map<String, dynamic>.from(ticketRaw);
-
-      final createdAt = ticket['createdAt'];
-      if (createdAt is DateTime) {
-        ticket['createdAt'] = createdAt.toIso8601String();
-      } else {
-        ticket['createdAt'] = DateTime.now().toIso8601String();
-      }
-
-      final rawComments = ticket['comments'];
-      if (rawComments is List) {
-        ticket['comments'] = rawComments.map((comment) {
-          if (comment is Map) {
-            return {
-              'author': (comment['author'] ?? '').toString(),
-              'text': (comment['text'] ?? '').toString(),
-            };
-          }
-          return {
-            'author': 'System',
-            'text': comment.toString(),
-          };
-        }).toList();
-      } else {
-        ticket['comments'] = <Map<String, String>>[];
-      }
-
-      return ticket;
-    }).toList();
-
-    await prefs.setString(_ticketsStorageKey, jsonEncode(payload));
-  }
 
   List<Map<String, dynamic>> _tickets = [
     {
@@ -258,11 +140,11 @@ class AppProvider extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> registerAccount({
+  bool registerAccount({
     required String name,
     required String username,
     required String password,
-  }) async {
+  }) {
     final cleanedName = name.trim();
     final cleanedUsername = username.trim();
     final cleanedPassword = password.trim();
@@ -282,7 +164,6 @@ class AppProvider extends ChangeNotifier {
       'role': 'User',
     };
 
-    await _saveAccountsToStorage();
     notifyListeners();
     return true;
   }
@@ -294,10 +175,10 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> updateProfile({
+  bool updateProfile({
     required String name,
     required String username,
-  }) async {
+  }) {
     final cleanedName = name.trim();
     final cleanedUsername = username.trim();
     if (cleanedName.isEmpty || cleanedUsername.isEmpty) {
@@ -330,7 +211,6 @@ class AppProvider extends ChangeNotifier {
             ticket['reporter'] = newKey;
           }
         }
-        await _saveTicketsToStorage();
       }
     } else {
       _accounts[oldKey] = updated;
@@ -340,15 +220,14 @@ class AppProvider extends ChangeNotifier {
     _username = cleanedUsername;
     _role = updated['role'] ?? _role;
 
-    await _saveAccountsToStorage();
     notifyListeners();
     return true;
   }
 
-  Future<bool> changePassword({
+  bool changePassword({
     required String currentPassword,
     required String newPassword,
-  }) async {
+  }) {
     final oldPwd = currentPassword.trim();
     final newPwd = newPassword.trim();
     if (oldPwd.isEmpty || newPwd.length < 6) {
@@ -366,7 +245,6 @@ class AppProvider extends ChangeNotifier {
     }
 
     account['password'] = newPwd;
-    await _saveAccountsToStorage();
     notifyListeners();
     return true;
   }
@@ -396,7 +274,6 @@ class AppProvider extends ChangeNotifier {
     });
 
     notifyListeners();
-    _saveTicketsToStorage();
   }
 
   void updateTicketStatus(String ticketId, String status) {
@@ -414,7 +291,6 @@ class AppProvider extends ChangeNotifier {
     final comments = _tickets[idx]['comments'] as List<dynamic>;
     comments.add({'author': _role, 'text': 'Status diubah menjadi $status.'});
     notifyListeners();
-    _saveTicketsToStorage();
   }
 
   void addComment(String ticketId, String message) {
@@ -432,7 +308,6 @@ class AppProvider extends ChangeNotifier {
     final comments = _tickets[idx]['comments'] as List<dynamic>;
     comments.add({'author': _role, 'text': trimmed});
     notifyListeners();
-    _saveTicketsToStorage();
   }
 
   Map<String, int> get ticketStats {

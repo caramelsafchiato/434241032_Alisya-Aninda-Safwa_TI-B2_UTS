@@ -85,7 +85,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: () {
                     if (!_formKey.currentState!.validate()) {
                       return;
                     }
@@ -93,7 +93,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     final messenger = ScaffoldMessenger.of(context);
                     final navigator = Navigator.of(context);
 
-                    final success = await appProvider.registerAccount(
+                    final success = appProvider.registerAccount(
                       name: _nameController.text,
                       username: _usernameController.text,
                       password: _passwordController.text,

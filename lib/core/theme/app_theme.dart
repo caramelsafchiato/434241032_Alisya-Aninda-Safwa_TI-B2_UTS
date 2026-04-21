@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  static const Color _primary = Color(0xFF0F766E);
-  static const Color _secondary = Color(0xFFD97706);
+  static const Color _primary = Color(0xFF2563EB);
+  static const Color _secondary = Color(0xFF60A5FA);
 
   static final lightTheme = ThemeData(
     useMaterial3: true,
@@ -59,8 +59,8 @@ class AppTheme {
     colorScheme: ColorScheme.fromSeed(
       seedColor: _primary,
       brightness: Brightness.dark,
-      primary: const Color(0xFF2DD4BF),
-      secondary: const Color(0xFFF59E0B),
+      primary: const Color(0xFF60A5FA),
+      secondary: const Color(0xFF93C5FD),
     ),
     textTheme: GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme),
     scaffoldBackgroundColor: const Color(0xFF0A1016),
@@ -88,7 +88,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: const BorderSide(color: Color(0xFF2DD4BF), width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF60A5FA), width: 1.5),
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(

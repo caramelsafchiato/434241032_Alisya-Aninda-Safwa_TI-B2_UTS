@@ -75,15 +75,15 @@ class DashboardPage extends StatelessWidget {
             Row(
               children: [
                 _buildStatCard(context, "Total Tiket", "${stats['total']}", Icons.auto_graph_rounded, colorScheme.primary),
-                _buildStatCard(context, "Open", "${stats['open']}", Icons.mark_email_unread_rounded, const Color(0xFFD97706)),
+                _buildStatCard(context, "Open", "${stats['open']}", Icons.mark_email_unread_rounded, const Color(0xFF1D4ED8)),
               ],
             ),
             const SizedBox(height: 10),
 
             Row(
               children: [
-                _buildStatCard(context, "In Progress", "${stats['inProgress']}", Icons.build_circle_outlined, const Color(0xFFCA8A04)),
-                _buildStatCard(context, "Resolved", "${stats['resolved']}", Icons.task_alt_rounded, const Color(0xFF059669)),
+                _buildStatCard(context, "In Progress", "${stats['inProgress']}", Icons.build_circle_outlined, const Color(0xFF2563EB)),
+                _buildStatCard(context, "Resolved", "${stats['resolved']}", Icons.task_alt_rounded, const Color(0xFF0EA5E9)),
               ],
             ),
 

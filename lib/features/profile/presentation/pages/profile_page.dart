@@ -57,13 +57,13 @@ class _ProfilePageState extends State<ProfilePage> {
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              onPressed: () async {
+              onPressed: () {
                 if (!formKey.currentState!.validate()) {
                   return;
                 }
                 final messenger = ScaffoldMessenger.of(this.context);
                 final nav = Navigator.of(context);
-                final success = await appProvider.updateProfile(
+                final success = appProvider.updateProfile(
                   name: nameController.text,
                   username: usernameController.text,
                 );
@@ -147,13 +147,13 @@ class _ProfilePageState extends State<ProfilePage> {
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              onPressed: () async {
+              onPressed: () {
                 if (!formKey.currentState!.validate()) {
                   return;
                 }
                 final messenger = ScaffoldMessenger.of(this.context);
                 final nav = Navigator.of(context);
-                final success = await appProvider.changePassword(
+                final success = appProvider.changePassword(
                   currentPassword: currentController.text,
                   newPassword: newController.text,
                 );
