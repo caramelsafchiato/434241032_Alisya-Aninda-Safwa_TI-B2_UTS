@@ -11,6 +11,126 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  Future<void> _showCreateInternalAccountDialog(BuildContext context) async {
+    final appProvider = Provider.of<AppProvider>(context, listen: false);
+    final nameController = TextEditingController();
+    final usernameController = TextEditingController();
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    String selectedRole = 'Helpdesk';
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Buat Akun Internal'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Nama wajib diisi';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: usernameController,
+                      decoration: const InputDecoration(labelText: 'Username'),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Username wajib diisi';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: true,
+                      decoration: const InputDecoration(labelText: 'Password'),
+                      validator: (value) {
+                        if (value == null || value.trim().length < 6) {
+                          return 'Password minimal 6 karakter';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedRole,
+                      decoration: const InputDecoration(labelText: 'Role Akun'),
+                      items: const [
+                        DropdownMenuItem(value: 'Helpdesk', child: Text('Helpdesk')),
+                        DropdownMenuItem(value: 'Admin', child: Text('Admin')),
+                      ],
+                      onChanged: (value) {
+                        if (value == null) {
+                          return;
+                        }
+                        setDialogState(() {
+                          selectedRole = value;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Batal'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    if (!formKey.currentState!.validate()) {
+                      return;
+                    }
+
+                    final messenger = ScaffoldMessenger.of(this.context);
+                    final success = appProvider.createInternalAccount(
+                      name: nameController.text,
+                      username: usernameController.text,
+                      password: passwordController.text,
+                      role: selectedRole,
+                    );
+
+                    if (!success) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Gagal membuat akun internal. Username mungkin sudah dipakai.'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Akun $selectedRole berhasil dibuat.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text('Simpan'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Future<void> _showEditProfileDialog(BuildContext context) async {
     final appProvider = Provider.of<AppProvider>(context, listen: false);
     final nameController = TextEditingController(text: appProvider.fullName);
@@ -215,6 +335,14 @@ class _ProfilePageState extends State<ProfilePage> {
               trailing: const Icon(Icons.chevron_right),
               onTap: () => _showChangePasswordDialog(context),
             ),
+
+            if (appProvider.canCreateInternalAccount)
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings_outlined),
+                title: const Text('Buat Akun Helpdesk/Admin'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => _showCreateInternalAccountDialog(context),
+              ),
 
             ListTile(
               leading: const Icon(Icons.dark_mode),

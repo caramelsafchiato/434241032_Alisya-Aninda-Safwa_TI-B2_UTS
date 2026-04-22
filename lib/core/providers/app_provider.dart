@@ -7,6 +7,7 @@ class AppProvider extends ChangeNotifier {
   String _fullName = 'Guest User';
   String _username = 'Guest';
   String _role = 'User';
+  static const Set<String> _internalUsernames = {'admin', 'helpdesk', 'staff'};
 
   final Map<String, Map<String, String>> _accounts = {
     'admin': {'name': 'Admin System', 'password': 'admin123', 'role': 'Admin'},
@@ -52,6 +53,7 @@ class AppProvider extends ChangeNotifier {
   bool get canCreateTicket =>
       _role == 'User' || _role == 'Admin' || _role == 'Helpdesk';
   bool get canManageTicket => _role == 'Helpdesk' || _role == 'Admin';
+  bool get canCreateInternalAccount => _role == 'Admin';
 
   List<Map<String, dynamic>> get visibleTickets {
     _normalizeTicketStore();
@@ -100,16 +102,6 @@ class AppProvider extends ChangeNotifier {
 
   void setUsername(String name) {
     _username = name.trim().isEmpty ? 'Guest' : name.trim();
-    final String input = _username.toLowerCase();
-
-    if (input == 'admin') {
-      _role = 'Admin';
-    } else if (input == 'helpdesk' || input == 'staff') {
-      _role = 'Helpdesk';
-    } else {
-      _role = 'User';
-    }
-
     notifyListeners();
   }
 
@@ -135,7 +127,7 @@ class AppProvider extends ChangeNotifier {
 
     _username = cleanedUsername;
     _fullName = account['name'] ?? cleanedUsername;
-    _role = account['role'] ?? 'User';
+    _role = _normalizeRole(account['role']);
     notifyListeners();
     return true;
   }
@@ -154,7 +146,7 @@ class AppProvider extends ChangeNotifier {
     }
 
     final key = cleanedUsername.toLowerCase();
-    if (_accounts.containsKey(key)) {
+    if (_accounts.containsKey(key) || _internalUsernames.contains(key)) {
       return false;
     }
 
@@ -162,6 +154,44 @@ class AppProvider extends ChangeNotifier {
       'name': cleanedName,
       'password': cleanedPassword,
       'role': 'User',
+    };
+
+    notifyListeners();
+    return true;
+  }
+
+  bool createInternalAccount({
+    required String name,
+    required String username,
+    required String password,
+    required String role,
+  }) {
+    if (!canCreateInternalAccount) {
+      return false;
+    }
+
+    final cleanedName = name.trim();
+    final cleanedUsername = username.trim();
+    final cleanedPassword = password.trim();
+    final normalizedRole = _normalizeRole(role);
+
+    if (cleanedName.isEmpty || cleanedUsername.isEmpty || cleanedPassword.length < 6) {
+      return false;
+    }
+
+    if (normalizedRole != 'Admin' && normalizedRole != 'Helpdesk') {
+      return false;
+    }
+
+    final key = cleanedUsername.toLowerCase();
+    if (_accounts.containsKey(key)) {
+      return false;
+    }
+
+    _accounts[key] = {
+      'name': cleanedName,
+      'password': cleanedPassword,
+      'role': normalizedRole,
     };
 
     notifyListeners();
@@ -199,7 +229,7 @@ class AppProvider extends ChangeNotifier {
     final updated = {
       'name': cleanedName,
       'password': account['password'] ?? '',
-      'role': account['role'] ?? _role,
+      'role': _normalizeRole(account['role'] ?? _role),
     };
 
     if (newKey != oldKey) {
@@ -218,7 +248,7 @@ class AppProvider extends ChangeNotifier {
 
     _fullName = cleanedName;
     _username = cleanedUsername;
-    _role = updated['role'] ?? _role;
+    _role = _normalizeRole(updated['role'] ?? _role);
 
     notifyListeners();
     return true;
@@ -321,5 +351,12 @@ class AppProvider extends ChangeNotifier {
       'inProgress': inProgress,
       'resolved': resolved,
     };
+  }
+
+  String _normalizeRole(String? value) {
+    if (value == 'Admin' || value == 'Helpdesk' || value == 'User') {
+      return value!;
+    }
+    return 'User';
   }
 }

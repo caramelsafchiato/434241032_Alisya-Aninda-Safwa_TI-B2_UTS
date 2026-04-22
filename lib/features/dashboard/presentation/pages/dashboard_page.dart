@@ -17,7 +17,7 @@ class DashboardPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Control Center"),
+        title: const Text("Dashboard Utama"),
         actions: [
           IconButton(
             onPressed: () {
